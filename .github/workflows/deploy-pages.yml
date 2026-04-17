@@ -10,12 +10,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
   quality:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,7 +38,7 @@ jobs:
           VITE_PUBLIC_VERSION: ${{ github.sha }}
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
 
-      - name: Build staging site
+      - name: Build staging preview
         if: github.ref == 'refs/heads/staging' || github.base_ref == 'staging'
         run: npm run build
         env:
@@ -45,7 +46,7 @@ jobs:
           VITE_PUBLIC_VERSION: ${{ github.sha }}
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
 
-      - name: Upload preview artifact for develop
+      - name: Upload preview artifact (develop)
         if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
@@ -55,14 +56,17 @@ jobs:
   deploy-staging:
     if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
     needs: quality
+    runs-on: ubuntu-latest
+
     permissions:
       contents: read
       pages: write
       id-token: write
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,7 +93,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment
